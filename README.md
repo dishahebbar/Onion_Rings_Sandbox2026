@@ -1,1 +1,5 @@
 # Onion_Rings_Sandbox2026
+
+Several companies find out they have been breached months after the damage is done. We plan to build a real-time monitoring and alerting platform that watches the places attackers actually operate in, such as dark web forums, Telegram channels, and breach databases.
+We continuously scan these sources for a company's sensitive data like credentials, emails, SSNs, internal documents using pattern matching, hashing, and source credibility scoring to verify leaks and filter out noise. When a real leak is detected, we generate a risk score, show the source and a sanitized snippet, and trigger automated alerts so security teams can respond immediately by forcing password resets, filing tickets related to the incident, and patching vulnerabilities before attackers can exploit them.
+Companies can view what data we're actively monitoring on their behalf. They can request a permanent wipe of their watchlist from our system, and re-register their assets anytime. This helps to build trust between us and the companies so that the data we have stored does not become another point of exploitation.
