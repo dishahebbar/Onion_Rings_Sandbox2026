@@ -462,7 +462,7 @@ col5.metric("Passwords",len(datasets["password"]))
 
 # ── Emergency Controls ──────────────────
 st.markdown("---")
-st.subheader("Emergency Controls")
+st.subheader("Emergency Controls: You can choose to store your data in our database or choose to wipe your data off of our database")
 
 if st.button("WIPE ALL DATA", type="primary"):
     wipe_database()
