@@ -12,7 +12,9 @@ from backend import (
     check_domain,
     check_phone,
     store_scan,
-    wipe_database
+    wipe_database,
+    delete_user_data,
+    count_user_records
 )
 
 
@@ -503,6 +505,35 @@ st.subheader("Emergency Controls")
 if st.button("WIPE ALL DATA", type="primary"):
     wipe_database()
     st.success("All stored scan history wiped.")
+
+st.markdown("### Delete My Data")
+
+identifier = st.text_input(
+    "Enter email / phone / IP / domain used earlier"
+)
+
+if st.button("Check Stored Records"):
+
+    if identifier.strip() == "":
+        st.warning("Please enter a valid identifier.")
+    else:
+
+        count = count_user_records(identifier)
+
+        if count == 0:
+            st.info("No records found for this identifier.")
+        else:
+            st.warning(f"{count} stored scan(s) found for this identifier.")
+
+            if st.button("Confirm Delete"):
+                delete_user_data(
+                    email=identifier,
+                    phone=identifier,
+                    vpn=identifier,
+                    domain=identifier
+                )
+
+                st.success("All matching records deleted successfully.")
 
 
 # ── Footer ──────────────────────────────
