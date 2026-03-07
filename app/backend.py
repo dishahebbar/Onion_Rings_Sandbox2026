@@ -192,26 +192,32 @@ def check_domain(domain):
 
 import requests
 
-def check_phone(phone):
+def check_phone(phone_number, country_code=None):
+    try:
+        url = f"https://ipqualityscore.com/api/json/phone/{PHONE_API_KEY}/{phone_number}?country={country_code}"
+        
+        response = requests.get(url)
+        data = response.json()
+        
+        return {
+            "valid":       data.get("valid", False),
+            "fraud_score": data.get("fraud_score", 0),
+            "line_type":   data.get("line_type", "Unknown"),
+            "carrier":     data.get("carrier", "Unknown"),
+            "country":     data.get("country_code", country_code),
+            "active":      data.get("active", False),
+            "risky":       data.get("risky", False),
+        }
 
-    url = "https://phonevalidation.abstractapi.com/v1/"
-
-    params = {
-        "api_key": PHONE_API_KEY,
-        "phone": phone
-    }
-
-    r = requests.get(url, params=params)
-    data = r.json()
-
-    return {
-        "phone": data.get("phone", phone),
-        "valid": data.get("valid", False),
-        "country": data.get("country", {}).get("name") if data.get("country") else None,
-        "carrier": data.get("carrier"),
-        "type": data.get("type")
-    }
-
+    except Exception as e:
+        return {
+            "valid":       False,
+            "fraud_score": 0,
+            "line_type":   "Unknown",
+            "carrier":     "Unknown",
+            "country":     country_code,
+            "error":       str(e)
+        }
 # -------------------------------
 # DATABASE UTILS
 # -------------------------------
