@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import streamlit as st
 import streamlit.components.v1 as components
 
-from onion_backend import (
+from backend import (
     check_email,
     check_password,
     check_vpn_ip,
@@ -41,6 +41,36 @@ def get_stored_values(column):
     conn.close()
 
     return [r[0] for r in rows]
+
+
+# ── Country Code Mapping ─────────────────
+COUNTRY_CODES = {
+    "🇮🇳 India (+91)":           {"code": "IN", "dial": "+91"},
+    "🇺🇸 United States (+1)":    {"code": "US", "dial": "+1"},
+    "🇬🇧 United Kingdom (+44)":  {"code": "GB", "dial": "+44"},
+    "🇦🇺 Australia (+61)":       {"code": "AU", "dial": "+61"},
+    "🇨🇦 Canada (+1)":           {"code": "CA", "dial": "+1"},
+    "🇩🇪 Germany (+49)":         {"code": "DE", "dial": "+49"},
+    "🇫🇷 France (+33)":          {"code": "FR", "dial": "+33"},
+    "🇯🇵 Japan (+81)":           {"code": "JP", "dial": "+81"},
+    "🇨🇳 China (+86)":           {"code": "CN", "dial": "+86"},
+    "🇧🇷 Brazil (+55)":          {"code": "BR", "dial": "+55"},
+    "🇷🇺 Russia (+7)":           {"code": "RU", "dial": "+7"},
+    "🇿🇦 South Africa (+27)":    {"code": "ZA", "dial": "+27"},
+    "🇳🇬 Nigeria (+234)":        {"code": "NG", "dial": "+234"},
+    "🇲🇽 Mexico (+52)":          {"code": "MX", "dial": "+52"},
+    "🇸🇬 Singapore (+65)":       {"code": "SG", "dial": "+65"},
+    "🇦🇪 UAE (+971)":            {"code": "AE", "dial": "+971"},
+    "🇸🇦 Saudi Arabia (+966)":   {"code": "SA", "dial": "+966"},
+    "🇮🇩 Indonesia (+62)":       {"code": "ID", "dial": "+62"},
+    "🇵🇰 Pakistan (+92)":        {"code": "PK", "dial": "+92"},
+    "🇧🇩 Bangladesh (+880)":     {"code": "BD", "dial": "+880"},
+    "🇵🇭 Philippines (+63)":     {"code": "PH", "dial": "+63"},
+    "🇰🇷 South Korea (+82)":     {"code": "KR", "dial": "+82"},
+    "🇮🇹 Italy (+39)":           {"code": "IT", "dial": "+39"},
+    "🇪🇸 Spain (+34)":           {"code": "ES", "dial": "+34"},
+    "🇳🇱 Netherlands (+31)":     {"code": "NL", "dial": "+31"},
+}
 
 
 # ── Hacker Rain Background ──────────────
@@ -178,6 +208,13 @@ color:#00ff41 !important;
 border:1px solid #00ff41 !important;
 font-size:22px !important;
 padding:14px !important;
+}
+
+.stSelectbox > div > div{
+background:#021006 !important;
+color:#00ff41 !important;
+border:1px solid #00ff41 !important;
+font-size:20px !important;
 }
 
 .stButton > button{
@@ -327,24 +364,136 @@ with tab_api:
 # ── Phone Tab ───────────────────────────
 with tab_phone:
 
-    phone_input = st.text_input("Enter Phone Number")
+    st.markdown("### 📡 Phone Number Validator")
 
+    # Step 1 — Country Selection
+    st.markdown("**Step 1 — Select Country**")
+    selected_country_label = st.selectbox(
+        "Choose Country",
+        options=list(COUNTRY_CODES.keys()),
+        index=0  # defaults to India
+    )
+
+    selected_country = COUNTRY_CODES[selected_country_label]
+    country_code     = selected_country["code"]   # e.g. "IN"
+    dial_code        = selected_country["dial"]    # e.g. "+91"
+
+    # Show selected country info
+    st.markdown(
+        f"""
+        <div style='
+            background:#021006;
+            border:1px solid #00ff41;
+            border-radius:8px;
+            padding:10px 18px;
+            margin-bottom:12px;
+            font-size:18px;
+        '>
+             Country Code: <b style='color:#00ff41'>{country_code}</b>
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            Dial Code: <b style='color:#00ff41'>{dial_code}</b>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Step 2 — Phone Number Input
+    st.markdown("**Step 2 — Enter Phone Number**")
+    st.caption(f"Enter without country code — we will add {dial_code} automatically")
+
+    phone_input = st.text_input(
+        "Phone Number",
+        placeholder=f"e.g. 9876543210"
+    )
+
+    # Show full number preview
+    if phone_input:
+        full_number = f"{dial_code}{phone_input}".replace("+", "")
+        st.markdown(
+            f"""
+            <div style='
+                background:#021006;
+                border:1px solid #00ff41;
+                border-radius:8px;
+                padding:10px 18px;
+                margin-bottom:12px;
+                font-size:18px;
+            '>
+                 Full Number: <b style='color:#00ff41'>{full_number}</b>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # Step 3 — Scan Button
     if st.button("Scan Phone"):
 
         if phone_input:
 
-            with st.spinner("Validating phone number..."):
+            full_number = f"{dial_code}{phone_input}"
 
-                data = check_phone(phone_input)
+            with st.spinner(f"Validating {full_number} for {selected_country_label}..."):
 
-                store_scan(phone=phone_input)
+                # Pass full number with country code to backend
+                data = check_phone(full_number, country_code=country_code)
 
-                if data["valid"]:
-                    st.success("Valid phone number")
+                store_scan(phone=full_number)
+
+                # ── Results Display ──────────────
+                st.markdown("### Results")
+
+                if data.get("valid"):
+                    st.success(f"Valid phone number in {selected_country_label}")
                 else:
-                    st.error("Invalid phone number")
+                    st.error(f"Invalid")
 
-                st.write(data)
+                # ── Detail Cards ─────────────────
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.metric(
+                        label="Line Type",
+                        value=data.get("line_type", data.get("type", "Unknown")).upper()
+                    )
+
+                with col2:
+                    st.metric(
+                        label="Carrier",
+                        value=data.get("carrier", "Unknown")
+                    )
+
+                with col3:
+                    fraud = data.get("fraud_score", 0)
+                    st.metric(
+                        label="Fraud Score",
+                        value=f"{fraud}/100",
+                        delta="High Risk" if fraud > 75 else "Low Risk",
+                        delta_color="inverse"
+                    )
+
+                # ── Risk Assessment ───────────────
+                st.markdown("### Risk Assessment")
+
+                line_type = data.get("line_type", data.get("type", "")).upper()
+                fraud_score = data.get("fraud_score", 0)
+
+                if not data.get("valid"):
+                    st.error(" INVALID NUMBER — Does not exist in this country")
+                elif fraud_score > 75:
+                    st.error(f" CRITICAL — Fraud score {fraud_score}/100")
+                elif line_type == "VOIP":
+                    st.warning(" HIGH RISK — VOIP number (commonly used by attackers)")
+                elif fraud_score > 50:
+                    st.warning(f" MEDIUM RISK — Moderate fraud score {fraud_score}/100")
+                else:
+                    st.success(" LOW RISK — Appears legitimate")
+
+                # ── Full JSON Response ────────────
+                with st.expander("View Full API Response"):
+                    st.json(data)
+
+        else:
+            st.warning("Please enter a phone number first")
 
 
 # ── Emergency Controls ──────────────────
