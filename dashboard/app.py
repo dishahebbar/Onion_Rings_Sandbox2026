@@ -1,17 +1,87 @@
 import os
+import sqlite3
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
+
 # ── Page config ─────────────────────────
 st.set_page_config(page_title="ONION_RINGS", layout="wide")
+
+
+# ── Database Setup ──────────────────────
+DB_FILE = "onion_rings.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS user_scans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT,
+        password TEXT,
+        vpn TEXT,
+        api TEXT,
+        phone TEXT,
+        timestamp TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+
+def store_user_data(email=None, password=None, vpn=None, api=None, phone=None):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    c.execute("""
+    INSERT INTO user_scans(email,password,vpn,api,phone,timestamp)
+    VALUES(?,?,?,?,?,?)
+    """,
+    (
+        email,
+        password,
+        vpn,
+        api,
+        phone,
+        datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+def wipe_database():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("DELETE FROM user_scans")
+    conn.commit()
+    conn.close()
+
+
+def get_stored_values(column):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    query = f"SELECT DISTINCT {column} FROM user_scans WHERE {column} IS NOT NULL AND {column} != ''"
+    rows = c.execute(query).fetchall()
+
+    conn.close()
+
+    return [r[0] for r in rows]
+
 
 # ── Hacker Rain Background ──────────────
 components.html(
 """
 <style>
-
 body{
 margin:0;
 overflow:hidden;
@@ -25,7 +95,6 @@ left:0;
 width:100vw;
 height:100vh;
 }
-
 </style>
 
 <canvas id="matrix"></canvas>
@@ -113,28 +182,28 @@ st.markdown("""
 
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
-html, body, .stApp, div, p, span, label{
+html, body, .stApp{
 font-family:'JetBrains Mono', monospace !important;
-font-size:24px !important;
+font-size:22px !important;
 color:#a8ffcf;
 }
 
 h1{
 font-family:'Orbitron', sans-serif !important;
-font-size:4rem !important;
+font-size:2.5rem !important;
 color:#00ff41;
 text-shadow:0 0 10px #00ff41;
 }
 
 h2{
 font-family:'Orbitron', sans-serif !important;
-font-size:2.8rem !important;
+font-size:2.2rem !important;
 color:#00ff41;
 }
 
 h3{
 font-family:'Orbitron', sans-serif !important;
-font-size:2.2rem !important;
+font-size:1.5rem !important;
 color:#00ff41;
 }
 
@@ -142,8 +211,8 @@ color:#00ff41;
 background:#021006 !important;
 color:#00ff41 !important;
 border:1px solid #00ff41 !important;
-font-size:24px !important;
-padding:16px !important;
+font-size:22px !important;
+padding:14px !important;
 }
 
 .stButton > button{
@@ -151,17 +220,43 @@ background:linear-gradient(90deg,#003b0f,#00ff41) !important;
 color:black !important;
 font-weight:bold;
 border-radius:12px !important;
-font-size:22px !important;
-padding:16px 28px !important;
+font-size:20px !important;
+padding:14px 24px !important;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# ── Session State ───────────────────────
-if "alerts" not in st.session_state:
-    st.session_state.alerts = []
+# ── Tab Styling ─────────────────────────
+st.markdown("""
+<style>
+
+[data-baseweb="tab"]{
+font-size:24px !important;
+color:#7bffb5 !important;
+padding:12px 26px !important;
+transition:all 0.25s ease;
+}
+
+[aria-selected="true"]{
+color:#00ff41 !important;
+border-bottom:3px solid #00ff41 !important;
+text-shadow:
+0 0 6px #00ff41,
+0 0 14px #00ff41,
+0 0 28px #00ff41;
+}
+
+[data-baseweb="tab"]:hover{
+color:#00ff41 !important;
+text-shadow:
+0 0 6px #00ff41,
+0 0 12px #00ff41;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 
 # ── Data Loading ────────────────────────
@@ -233,58 +328,123 @@ tab_email, tab_password, tab_vpn, tab_api, tab_phone = st.tabs(
 
 
 with tab_email:
-    email = st.text_input("Enter Email")
+
+    email_history = get_stored_values("email")
+
+    email_select = st.selectbox("Previous Emails", [""] + email_history)
+
+    new_email = st.text_input("Or Enter Email")
+
+    final_email = new_email if new_email else email_select
+
     if st.button("Scan Email"):
-        results = check_email(email)
-        if results:
-            st.error("⚠ Email found in breach dataset")
-            st.dataframe(results)
-        else:
-            st.success("No breach detected")
+
+        if final_email:
+            store_user_data(email=final_email)
+
+            results = check_email(final_email)
+
+            if results:
+                st.error("⚠ Email found in breach dataset")
+                st.dataframe(results)
+            else:
+                st.success("No breach detected")
 
 
 with tab_password:
-    pwd = st.text_input("Enter Password", type="password")
+
+    pwd_history = get_stored_values("password")
+
+    pwd_select = st.selectbox("Previous Passwords", [""] + pwd_history)
+
+    pwd_input = st.text_input("Or Enter Password", type="password")
+
+    final_pwd = pwd_input if pwd_input else pwd_select
+
     if st.button("Scan Password"):
-        results = check_password(pwd)
-        if results:
-            st.error("⚠ Password exposed in leaks")
-            st.dataframe(results)
-        else:
-            st.success("Password not found")
+
+        if final_pwd:
+            store_user_data(password=final_pwd)
+
+            results = check_password(final_pwd)
+
+            if results:
+                st.error("⚠ Password exposed in leaks")
+                st.dataframe(results)
+            else:
+                st.success("Password not found")
 
 
 with tab_vpn:
-    vpn = st.text_input("Enter VPN Username")
+
+    vpn_history = get_stored_values("vpn")
+
+    vpn_select = st.selectbox("Previous VPN Users", [""] + vpn_history)
+
+    vpn_input = st.text_input("Or Enter VPN Username")
+
+    final_vpn = vpn_input if vpn_input else vpn_select
+
     if st.button("Scan VPN"):
-        results = check_vpn(vpn)
-        if results:
-            st.error("⚠ VPN credentials leaked")
-            st.dataframe(results)
-        else:
-            st.success("No breach detected")
+
+        if final_vpn:
+            store_user_data(vpn=final_vpn)
+
+            results = check_vpn(final_vpn)
+
+            if results:
+                st.error("⚠ VPN credentials leaked")
+                st.dataframe(results)
+            else:
+                st.success("No breach detected")
 
 
 with tab_api:
-    api = st.text_input("Enter API Domain or Prefix")
+
+    api_history = get_stored_values("api")
+
+    api_select = st.selectbox("Previous API Domains", [""] + api_history)
+
+    api_input = st.text_input("Or Enter API Domain")
+
+    final_api = api_input if api_input else api_select
+
     if st.button("Scan API Key"):
-        results = check_api(api)
-        if results:
-            st.error("⚠ API exposure detected")
-            st.dataframe(results)
-        else:
-            st.success("No exposure found")
+
+        if final_api:
+            store_user_data(api=final_api)
+
+            results = check_api(final_api)
+
+            if results:
+                st.error("⚠ API exposure detected")
+                st.dataframe(results)
+            else:
+                st.success("No exposure found")
 
 
 with tab_phone:
-    phone = st.text_input("Enter Phone Number")
+
+    phone_history = get_stored_values("phone")
+
+    phone_select = st.selectbox("Previous Phone Numbers", [""] + phone_history)
+
+    phone_input = st.text_input("Or Enter Phone Number")
+
+    final_phone = phone_input if phone_input else phone_select
+
     if st.button("Scan Phone"):
-        results = check_phone(phone)
-        if results:
-            st.error("⚠ Phone number exposed")
-            st.dataframe(results)
-        else:
-            st.success("No breach detected")
+
+        if final_phone:
+            store_user_data(phone=final_phone)
+
+            results = check_phone(final_phone)
+
+            if results:
+                st.error("⚠ Phone number exposed")
+                st.dataframe(results)
+            else:
+                st.success("No breach detected")
 
 
 # ── Dataset Info ────────────────────────
@@ -302,12 +462,14 @@ col5.metric("Passwords",len(datasets["password"]))
 
 # ── Emergency Controls ──────────────────
 st.markdown("---")
-st.subheader("Emergency Controls: You can choose to let us store your data or wipe it from our database.")
+st.subheader("Emergency Controls")
 
 if st.button("WIPE ALL DATA", type="primary"):
-    st.session_state.alerts = []
-    st.success("All alerts and stored data wiped.")
+    wipe_database()
+    st.success("All stored user data wiped.")
 
 
 # ── Footer ──────────────────────────────
-st.caption(f"ONION_RINGS • {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+st.caption(
+    f"Team ONION_RINGS | SYSTEM DATE & TIME: {datetime.now(ZoneInfo('Asia/Kolkata')).strftime('%d-%m-%Y %H:%M:%S IST')}"
+)
