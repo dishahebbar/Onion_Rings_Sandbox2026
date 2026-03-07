@@ -237,6 +237,59 @@ def get_scan_history():
 
     return rows
 
+# -------------------------------
+# DATABASE UTILS
+# -------------------------------
+import hashlib
+
+def count_user_records(identifier):
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    password_hash = hashlib.sha256(identifier.encode()).hexdigest()
+
+    query = """
+    SELECT COUNT(*) FROM scans
+    WHERE email = ?
+       OR phone = ?
+       OR vpn_ip = ?
+       OR api_domain = ?
+       OR password_hash = ?
+    """
+
+    result = c.execute(
+        query,
+        (identifier, identifier, identifier, identifier, password_hash)
+    ).fetchone()
+
+    conn.close()
+
+    return result[0]
+
+def delete_user_data(email=None, phone=None, vpn=None, domain=None, password=None):
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    password_hash = None
+    if password:
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+    query = """
+    DELETE FROM scans
+    WHERE email = ?
+       OR phone = ?
+       OR vpn_ip = ?
+       OR api_domain = ?
+       OR password_hash = ?
+    """
+
+    c.execute(query, (email, phone, vpn, domain, password_hash))
+
+    conn.commit()
+    conn.close()
+
 
 def wipe_database():
 
