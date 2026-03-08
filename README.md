@@ -1,5 +1,15 @@
 # Onion_Rings_Sandbox2026
 
-Several companies find out they have been breached months after the damage is done. We plan to build a real-time monitoring and alerting platform that watches the places attackers actually operate in, such as dark web forums, Telegram channels, and breach databases.
-We continuously scan these sources for a company's sensitive data like credentials, emails, SSNs, internal documents using pattern matching, hashing, and source credibility scoring to verify leaks and filter out noise. When a real leak is detected, we generate a risk score, show the source and a sanitized snippet, and trigger automated alerts so security teams can respond immediately by forcing password resets, filing tickets related to the incident, and patching vulnerabilities before attackers can exploit them.
-Companies can view what data we're actively monitoring on their behalf. They can request a permanent wipe of their watchlist from our system, and re-register their assets anytime. This helps to build trust between us and the companies so that the data we have stored does not become another point of exploitation.
+## Our Problem Statement
+Several companies/people find out they have been breached months after the damage is done. We plan to build a real-time monitoring and alerting platform that watches the places attackers actually operate in, such as dark web forums, Telegram channels, and breach databases.
+We continuously scan these sources for a company's/individual's sensitive data like credentials, emails, SSNs, internal documents using pattern matching, hashing, and source credibility scoring to verify leaks and filter out noise.
+
+## Our method of solving the problem at hand
+We use real time API monitoring system to monitor data and provide the user with information on credential leaks when prompted. The user may monitor any number of features using our interactive User Interface.
+
+## Features
+- Checking of Email breach
+- Checking of Password breach
+- Checking for VPN/IP leaks
+- Checking for Domain safety
+- Checking of Phone number and providing fraud score
