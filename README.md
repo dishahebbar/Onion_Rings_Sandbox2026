@@ -17,6 +17,8 @@ We use real time API monitoring system to monitor data and provide the user with
 ## To open our project
 You may install the libraries from requirements.txt, install the files from app folder and run the project using:
 python -m streamlit run sandbox.py
+
 (OR)
+
 Use this link to open the project:
 https://onionringssandbox2026.streamlit.app/
