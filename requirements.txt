@@ -1,6 +1,4 @@
-Here are the requirements for our project:
-pandas
-numpy
 streamlit
-matplotlib
-scikit-learn
+requests
+python-dotenv
+pandas
