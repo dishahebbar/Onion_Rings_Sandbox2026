@@ -366,7 +366,7 @@ with tab_api:
 # ── Phone Tab ───────────────────────────
 with tab_phone:
 
-    st.markdown("### 📡 Phone Number Validator")
+    st.markdown("### Phone Number Validator")
 
     # Step 1 — Country Selection
     st.markdown("**Step 1 — Select Country**")
