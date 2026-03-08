@@ -13,6 +13,7 @@ We use real time API monitoring system to monitor data and provide the user with
 - Checking for VPN/IP leaks
 - Checking for Domain safety
 - Checking of Phone number and providing fraud score
+- Dynamic UI
 
 ## To open our project
 You may install the libraries from requirements.txt, install the files from app folder and run the project using:
